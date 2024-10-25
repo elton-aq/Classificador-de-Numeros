@@ -44,13 +44,14 @@ Para executar o script, utilize o seguinte comando:
 python main.py
 ```
 
-Após iniciar o script, a câmera do dispositivo será ativada. A partir daí, você terá três opções para interação:
+Após iniciar o script, a câmera do dispositivo será ativada. A partir daí, você terá quatro opções para interação:
 
 - Levante **1 dedo (indicador)** para desenhar na tela.
 - Levante **3 dedos** para apagar o desenho.
 - Levante **5 dedos** para enviar a imagem para o classificador.
+- Apertar **Esc** encerrar.
 
-A saída com o número identificado será exibida no terminal. 
+A saída com o número identificado será exibida na tela e para mais consultas basta apagar o desenho e refaze-lo.
 
 > [!NOTE]
 > Note que você pode levantar 2 dedos para "pausar" o desenho, facilitando o uso.
