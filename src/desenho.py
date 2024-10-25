@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 from cvzone.HandTrackingModule import HandDetector
+import src.Dcnn as dcnn
 
 def conectar_pontos(matriz, inicio, fim):
     """
@@ -85,6 +86,9 @@ def inicia_desenho():
         # Detecta e desenha as mãos
         resultado = detector.findHands(img, draw=True)
         hands, img = resultado  # Atualiza a variável `img` com o resultado do detector
+        imgFlip = cv2.flip(img, 1)
+
+        altura, largura, _ = imgFlip.shape
 
         if hands:
             hand = hands[0]  # Obter os dados da primeira mão detectada
@@ -94,7 +98,7 @@ def inicia_desenho():
 
             if dedosLev == 1:
                 x, y = lmlist[8][0], lmlist[8][1]  # Coordenadas do ponto do dedo indicador
-                cv2.circle(img, (x, y), 10, (0, 0, 255), cv2.FILLED)
+                cv2.circle(img, (x, y), 10, (255, 0, 0), cv2.FILLED)
                 desenho_coord.append((x, y))
 
             if dedosLev == 3:
@@ -102,29 +106,47 @@ def inicia_desenho():
                 desenho_array = np.zeros((1120, 1120))
 
             if dedosLev == 5 and len(desenho_coord) > 0:
-                break
+                desenho_reduzido = ajusta_desenho(desenho_array)
+                cv2.imwrite('imagem_cinza.png', desenho_reduzido)
+
+                # Seta texto 
+                previsao = f'O numero identificado foi: {dcnn.identificaNumero("imagem_cinza.png")}'
+                tamanho_texto = cv2.getTextSize(previsao, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)[0]
+
+                # Calcula posições do texto e retângulo
+                posicao_x = (largura - tamanho_texto[0]) // 2  # Centraliza no eixo x
+                posicao_y = altura - 10  # 10 pixels acima do limite inferior
+
+                # Desenha o fundo do texto (retângulo)
+                retangulo_inferior = (posicao_x - 10, posicao_y - tamanho_texto[1] - 10)  # (x, y) do canto superior esquerdo
+                retangulo_superior = (posicao_x + tamanho_texto[0] + 10, posicao_y + 10)  # (x, y) do canto inferior direito
+                cv2.rectangle(imgFlip, retangulo_inferior, retangulo_superior, (255, 255, 255), cv2.FILLED)  # Desenha o retângulo preenchido em vermelho
+
+                # Desenha o texto sobre o retângulo
+                cv2.putText(imgFlip, previsao, (posicao_x, posicao_y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)  # Texto em branco
 
             # Faz desenho com base nos pontos
             for id, ponto in enumerate(desenho_coord):
                 x, y = ponto[0], ponto[1]
+                # Espelha a coordenada x
+                x_espelhado = largura - x  # Aplica o espelhamento
                 if id >= 1:
                     ax, ay = desenho_coord[id - 1][0], desenho_coord[id - 1][1]
-                    desenho_array = conectar_pontos(desenho_array, (x, y), (ax, ay)) # Conecta pontos formando um desenho continuo
+                    ax_espelhado = largura - ax  # Aplica o espelhamento
+                    desenho_array = conectar_pontos(desenho_array, (x, y), (ax, ay)) # Conecta pontos formando um desenho contínuo
                     if x != 0 and ax != 0:
-                        cv2.line(img, (x, y), (ax, ay), (0, 0, 255), 20)
+                        cv2.line(imgFlip, (x_espelhado, y), (ax_espelhado, ay), (255, 0, 0), 20)
+
 
         # Para com Esc
         key = cv2.waitKey(1)
         if key == 27:
             break    
 
-        imgFlip = cv2.flip(img, 1)
         cv2.imshow('Img', imgFlip)
 
     video.release()
     cv2.destroyAllWindows()
-
-    return desenho_array
 
 def ajusta_desenho(desenho_array):
 
